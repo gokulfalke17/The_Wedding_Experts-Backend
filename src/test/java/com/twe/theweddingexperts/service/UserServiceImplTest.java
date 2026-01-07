@@ -15,6 +15,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -72,5 +79,15 @@ class UserServiceImplTest {
 
         assertDoesNotThrow(() ->
                 userService.login(new LoginRequest()));
+    }
+
+    protected void mockSecurityContext(Long userId) {
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(userId);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
     }
 }
