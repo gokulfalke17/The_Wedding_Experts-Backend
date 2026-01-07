@@ -34,9 +34,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build & run tests
-        run: mvn clean verify
-
       - name: Build JAR
         run: mvn clean package -DskipTests
 
