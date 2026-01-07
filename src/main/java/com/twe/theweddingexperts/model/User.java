@@ -1,4 +1,4 @@
-package com.twe.theweddingexperts.entity;
+package com.twe.theweddingexperts.model;
 
 import com.twe.theweddingexperts.enums.AccountStatus;
 import com.twe.theweddingexperts.enums.UserRole;
@@ -77,4 +77,12 @@ public class User {
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+
+
+    @Column(name = "email_verification_token", length = 500)
+    private String emailVerificationToken;
+
+    @Column(name = "email_verification_expiry")
+    private LocalDateTime emailVerificationExpiry;
 }

@@ -1,17 +1,20 @@
 package com.twe.theweddingexperts.repository;
 
-import com.twe.theweddingexperts.entity.User;
+import com.twe.theweddingexperts.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
 public interface IUserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByEmail(String email);
-    Optional<User> findByPhone(String phone);
-    boolean existsByEmail(String email);
-    boolean existsByPhone(String phone);
-    Optional<User> findByResetPasswordToken(String token);
-    Optional<User> findByRememberMeToken(String rememberMeToken);
+    public Optional<User> findByEmail(String email);
+    public Optional<User> findByPhone(String phone);
+    public boolean existsByEmail(String email);
+    public boolean existsByPhone(String phone);
+    public Optional<User> findByResetPasswordToken(String token);
+    public Optional<User> findByRememberMeToken(String rememberMeToken);
+
+    public Optional<User> findByEmailVerificationToken(String token);
+
 
 }

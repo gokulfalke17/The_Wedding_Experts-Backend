@@ -1,6 +1,6 @@
 package com.twe.theweddingexperts.security;
 
-import com.twe.theweddingexperts.entity.User;
+import com.twe.theweddingexperts.model.User;
 import com.twe.theweddingexperts.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

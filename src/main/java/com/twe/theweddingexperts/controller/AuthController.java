@@ -9,8 +9,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -37,9 +35,15 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ApiResponse<String> forgotPassword(@RequestParam String email) {
-        String token = userService.forgotPassword(email);
-        return ApiResponse.success("Reset password token generated", token);
+
+        userService.forgotPassword(email);
+
+        return ApiResponse.success(
+                "Password reset email sent successfully",
+                null
+        );
     }
+
 
     @PostMapping("/reset-password")
     public ApiResponse<Void> resetPassword(@RequestParam String token,
@@ -57,6 +61,38 @@ public class AuthController {
                 userService.loginWithRememberMe(rememberMeToken)
         );
     }
+
+
+    @GetMapping("/verify-email")
+    public ApiResponse<String> verifyEmail(@RequestParam String token) {
+
+        userService.verifyEmail(token);
+
+        return ApiResponse.success(
+                "Email verified successfully",
+                null
+        );
+    }
+
+
+    @PostMapping("/resend-verification-email")
+    public ApiResponse<String> resendVerificationEmail(@RequestParam String email) {
+
+        userService.resendEmailVerification(email);
+
+        return ApiResponse.success(
+                "Verification email resent successfully",
+                null
+        );
+    }
+
+
+
+
+    //http://localhost:8080/oauth2/authorization/google - Google OAuth2 login URL
+    //http://localhost:8080/oauth2/authorization/github - GitHub OAuth2 login URL
+
+
 
    /* @GetMapping
     @PreAuthorize("hasRole('ADMIN')")

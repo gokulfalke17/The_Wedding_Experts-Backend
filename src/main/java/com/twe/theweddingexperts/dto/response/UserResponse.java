@@ -15,6 +15,10 @@ public class UserResponse {
     private UserRole role;
 
     private String token;
-
     private String rememberMeToken;
+
+    private String emailVerificationToken;
+
+    private boolean emailVerified;
+    private boolean phoneVerified;
 }

@@ -11,4 +11,6 @@ public class LoginRequest {
 
     @NotNull(message = "Please select remember me option (true or false)")
     private Boolean rememberMe;
+
+    private String captchaToken;
 }

@@ -1,9 +1,10 @@
 package com.twe.theweddingexperts.config;
 
-import com.twe.theweddingexperts.entity.User;
+import com.twe.theweddingexperts.model.User;
 import com.twe.theweddingexperts.enums.UserRole;
 import com.twe.theweddingexperts.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class AdminInitializer {
 
     private final IUserRepository userRepository;
@@ -46,9 +48,9 @@ public class AdminInitializer {
 
                 userRepository.save(admin);
 
-                System.out.println("Default ADMIN created: " + adminEmail);
+                log.info("Default ADMIN created: {}", adminEmail);
             } else {
-                System.out.println("ADMIN already exists");
+                log.info("ADMIN already exists");
             }
         };
     }

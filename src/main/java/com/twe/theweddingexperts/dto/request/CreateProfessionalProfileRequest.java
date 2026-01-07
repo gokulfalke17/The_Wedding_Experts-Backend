@@ -1,0 +1,13 @@
+package com.twe.theweddingexperts.dto.request;
+
+import lombok.Data;
+
+@Data
+public class CreateProfessionalProfileRequest {
+
+    private String businessName;
+    private String description;
+    private Integer experienceYears;
+    private String city;
+    private String state;
+}

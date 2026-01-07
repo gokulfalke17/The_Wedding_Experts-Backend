@@ -1,9 +1,12 @@
 package com.twe.theweddingexperts.service.impl;
 
+import com.twe.theweddingexperts.dto.request.ChangePasswordRequest;
 import com.twe.theweddingexperts.dto.request.LoginRequest;
 import com.twe.theweddingexperts.dto.request.RegisterRequest;
+import com.twe.theweddingexperts.dto.request.UpdateProfileRequest;
 import com.twe.theweddingexperts.dto.response.UserResponse;
-import com.twe.theweddingexperts.entity.User;
+import com.twe.theweddingexperts.exception.EmailSendException;
+import com.twe.theweddingexperts.model.User;
 import com.twe.theweddingexperts.enums.UserRole;
 import com.twe.theweddingexperts.exception.BadRequestException;
 import com.twe.theweddingexperts.exception.ResourceNotFoundException;
@@ -11,8 +14,11 @@ import com.twe.theweddingexperts.exception.UnauthorizedException;
 import com.twe.theweddingexperts.mapper.UserMapper;
 import com.twe.theweddingexperts.repository.IUserRepository;
 import com.twe.theweddingexperts.security.jwt.JwtUtil;
+import com.twe.theweddingexperts.service.IEmailService;
 import com.twe.theweddingexperts.service.IUserService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,8 +34,14 @@ public class UserServiceImpl implements IUserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    private final CaptchaService captchaService;
+
+    private final IEmailService emailService;
+
+
     @Override
     public UserResponse register(RegisterRequest request) {
+
         if (UserRole.ADMIN.name().equalsIgnoreCase(request.getRole())) {
             throw new UnauthorizedException("Admin registration is not allowed");
         }
@@ -38,21 +50,42 @@ public class UserServiceImpl implements IUserService {
             throw new BadRequestException("Email already registered");
         }
 
+        if (!captchaService.verifyCaptcha(request.getCaptchaToken())) {
+            throw new BadRequestException("Invalid captcha");
+        }
+
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(UserRole.valueOf(request.getRole()))
+                .emailVerified(false)
+                .phoneVerified(false)
+                .emailVerificationToken(UUID.randomUUID().toString())
+                .emailVerificationExpiry(LocalDateTime.now().plusHours(24))
                 .build();
 
         userRepository.save(user);
 
+        // For now, just log the token instead of sending email
+        System.out.println("Email verification token: " + user.getEmailVerificationToken());
+        System.out.println("Verify link: http://localhost:3000/verify-email?token=" + user.getEmailVerificationToken());
+
+        // If you want, you can wrap this in try-catch but skip sending
+       /* emailService.sendEmailVerification(
+                user.getEmail(),
+                user.getFullName(),
+                user.getEmailVerificationToken()
+        );*/
+
         return UserMapper.toResponse(user);
     }
 
+
     @Override
     public UserResponse login(LoginRequest request) {
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
 
@@ -60,22 +93,46 @@ public class UserServiceImpl implements IUserService {
             throw new UnauthorizedException("Invalid credentials");
         }
 
+        if (!captchaService.verifyCaptcha(request.getCaptchaToken())) {
+            throw new UnauthorizedException("Captcha verification failed");
+        }
+
+        String jwtToken = jwtUtil.generateToken(
+                user.getId(),
+                user.getRole().name()
+        );
+
         if (Boolean.TRUE.equals(request.getRememberMe())) {
             user.setRememberMeToken(UUID.randomUUID().toString());
             user.setRememberMeExpiry(LocalDateTime.now().plusDays(365));
             userRepository.save(user);
         }
 
-        String token = jwtUtil.generateToken(
-                user.getId(),
-                user.getRole().name()
-        );
-
-        return UserMapper.toResponse(user, token);
+        return UserMapper.toResponse(user, jwtToken);
     }
 
+
+
+//    @Override
+//    public String forgotPassword(String email) {
+//
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new BadRequestException("Email not found"));
+//
+//        if (user.getRole() == UserRole.ADMIN) {
+//            throw new UnauthorizedException("Admin password reset is not allowed");
+//        }
+//
+//        String resetToken = UUID.randomUUID().toString();
+//        user.setResetPasswordToken(resetToken);
+//        user.setResetPasswordExpiry(LocalDateTime.now().plusMinutes(15));
+//        userRepository.save(user);
+//
+//        return resetToken;
+//    }
+
     @Override
-    public String forgotPassword(String email) {
+    public void forgotPassword(String email) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Email not found"));
@@ -84,13 +141,23 @@ public class UserServiceImpl implements IUserService {
             throw new UnauthorizedException("Admin password reset is not allowed");
         }
 
-        String resetToken = UUID.randomUUID().toString();
-        user.setResetPasswordToken(resetToken);
+        user.setResetPasswordToken(UUID.randomUUID().toString());
         user.setResetPasswordExpiry(LocalDateTime.now().plusMinutes(15));
+
         userRepository.save(user);
 
-        return resetToken;
+        emailService.sendResetPasswordEmail(
+                user.getEmail(),
+                user.getFullName(),
+                user.getResetPasswordToken()
+        );
+
+        System.out.println("Reset Password Token :: "+user.getResetPasswordToken());
+
     }
+
+
+
 
 
     @Override
@@ -153,8 +220,88 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserResponse getUsers(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User Not Found.!"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found.!"));
         return UserMapper.toResponse(user);
     }
+
+    @Override
+    public UserResponse getMyProfile() {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User userProfile = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found.!"));
+
+        return UserMapper.toResponse(userProfile);
+    }
+
+    @Override
+    public UserResponse updateMyProfile(UpdateProfileRequest request) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found.!"));
+
+        user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
+
+        userRepository.save(user);
+
+        return UserMapper.toResponse(user);
+    }
+
+    @Override
+    public void changePassword(ChangePasswordRequest request) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found.!"));
+
+        if(!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new UnauthorizedException("Old password is incorrect.!");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+
+    @Override
+    public void verifyEmail(String token) {
+
+        User user = userRepository.findByEmailVerificationToken(token)
+                .orElseThrow(() -> new BadRequestException("Invalid email verification token"));
+
+        if (user.getEmailVerificationExpiry() == null ||
+                user.getEmailVerificationExpiry().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Email verification token expired");
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailVerificationToken(null);
+        user.setEmailVerificationExpiry(null);
+
+        userRepository.save(user);
+    }
+
+    @Override
+    public void resendEmailVerification(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.isEmailVerified()) {
+            throw new BadRequestException("Email is already verified");
+        }
+
+        user.setEmailVerificationToken(UUID.randomUUID().toString());
+        user.setEmailVerificationExpiry(LocalDateTime.now().plusHours(24));
+
+        userRepository.save(user);
+
+        emailService.sendEmailVerification(
+                user.getEmail(),
+                user.getFullName(),
+                user.getEmailVerificationToken()
+        );
+    }
+
+
 
 }
