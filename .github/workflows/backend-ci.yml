@@ -53,24 +53,27 @@ jobs:
             
             APP_DIR=/home/ubuntu/The_Wedding_Experts-Backend
             
+            echo "Ensuring app directory exists..."
             if [ ! -d "$APP_DIR" ]; then
-              echo "Project not found. Cloning repository..."
-              git clone https://github.com/${{ github.repository }}.git $APP_DIR
+              git clone https://github.com/gokulfalke17/The_Wedding_Experts-Backend.git $APP_DIR
             fi
             
             cd $APP_DIR
             
             echo "Pulling latest code..."
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
             
             echo "Building JAR..."
             mvn clean package -DskipTests
             
-            echo "Stopping old container..."
-            docker stop twe-backend || true
-            docker rm twe-backend || true
+            echo "Stopping and removing old container..."
+            docker rm -f twe-backend || true
             
-            echo "Cleaning old images..."
+            echo "Killing anything on port 8080..."
+            sudo fuser -k 8080/tcp || true
+            
+            echo "Cleaning unused Docker resources..."
             docker image prune -f
             
             echo "Building Docker image..."
@@ -79,6 +82,8 @@ jobs:
             echo "Starting new container..."
             docker run -d \
               --name twe-backend \
+              --restart unless-stopped \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               twe-backend:latest
+    
