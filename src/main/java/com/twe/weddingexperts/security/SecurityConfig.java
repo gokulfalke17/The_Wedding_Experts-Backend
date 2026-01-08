@@ -39,7 +39,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/oauth2/**",
                                 "/login/**",
-                                "/test/**"
+                                "/test/**",
+                                "logs/**"
                         ).permitAll()
 
                         .requestMatchers("/api/users/**")

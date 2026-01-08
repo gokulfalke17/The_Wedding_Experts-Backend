@@ -17,6 +17,7 @@ import com.twe.weddingexperts.service.IEmailService;
 import com.twe.weddingexperts.service.IPhoneOtpService;
 import com.twe.weddingexperts.service.IUserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements IUserService {
 
     private final IUserRepository userRepository;
@@ -68,13 +70,19 @@ public class UserServiceImpl implements IUserService {
         userRepository.save(user);
 
         // ---------- EMAIL VERIFICATION (DEV MODE) ----------
-        System.out.println("=================================");
-        System.out.println("EMAIL VERIFICATION TOKEN (DEV)");
-        System.out.println("Token : " + user.getEmailVerificationToken());
-        System.out.println("Verify URL:");
-        System.out.println("http://localhost:8080/api/auth/verify-email?token="
-                + user.getEmailVerificationToken());
-        System.out.println("=================================");
+//        System.out.println("=================================");
+//        System.out.println("EMAIL VERIFICATION TOKEN (DEV)");
+//        System.out.println("Token : " + user.getEmailVerificationToken());
+//        System.out.println("Verify URL:");
+//        System.out.println("http://localhost:8080/api/auth/verify-email?token="
+//                + user.getEmailVerificationToken());
+//        System.out.println("=================================");
+
+
+        log.info("User registered: {}", user.getEmail());
+        log.info("Email verification token: {}", user.getEmailVerificationToken());
+        log.info("Phone OTP sent to: {}", user.getPhone());
+        log.info("Please verify email and phone to complete registration.");
 
         // TODO (PROD)
         // emailService.sendEmailVerification(
@@ -141,10 +149,15 @@ public class UserServiceImpl implements IUserService {
         user.setResetPasswordExpiry(LocalDateTime.now().plusMinutes(15));
         userRepository.save(user);
 
-        System.out.println("=================================");
-        System.out.println("RESET PASSWORD TOKEN (DEV)");
-        System.out.println(user.getResetPasswordToken());
-        System.out.println("=================================");
+//        System.out.println("=================================");
+//        System.out.println("RESET PASSWORD TOKEN (DEV)");
+//        System.out.println(user.getResetPasswordToken());
+//        System.out.println("=================================");
+
+        log.info("Password reset requested for: {}", user.getEmail());
+        log.info("Reset token: {}", user.getResetPasswordToken());
+
+
 
         // TODO (PROD)
         // emailService.sendResetPasswordEmail(...)
@@ -263,10 +276,14 @@ public class UserServiceImpl implements IUserService {
         user.setEmailVerificationExpiry(LocalDateTime.now().plusHours(24));
         userRepository.save(user);
 
-        System.out.println("=================================");
-        System.out.println("RESEND EMAIL TOKEN (DEV)");
-        System.out.println(user.getEmailVerificationToken());
-        System.out.println("=================================");
+//        System.out.println("=================================");
+//        System.out.println("RESEND EMAIL TOKEN (DEV)");
+//        System.out.println(user.getEmailVerificationToken());
+//        System.out.println("=================================");
+
+
+        log.info("Resent email verification to: {}", user.getEmail());
+        log.info("New verification token: {}", user.getEmailVerificationToken());
     }
 
     @Override

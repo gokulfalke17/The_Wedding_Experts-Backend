@@ -7,6 +7,7 @@ import com.twe.weddingexperts.repository.IPhoneOtpRepository;
 import com.twe.weddingexperts.repository.IUserRepository;
 import com.twe.weddingexperts.service.IPhoneOtpService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PhoneOtpServiceImpl implements IPhoneOtpService {
 
     private final IPhoneOtpRepository otpRepository;
@@ -39,11 +41,17 @@ public class PhoneOtpServiceImpl implements IPhoneOtpService {
 
         otpRepository.save(phoneOtp);
 
-        System.out.println("=================================");
-        System.out.println("PHONE OTP (DEV MODE)");
-        System.out.println("OTP   : " + otp);
-        System.out.println("PHONE : " + phone);
-        System.out.println("=================================");
+//        System.out.println("=================================");
+//        System.out.println("PHONE OTP (DEV MODE)");
+//        System.out.println("OTP   : " + otp);
+//        System.out.println("PHONE : " + phone);
+//        System.out.println("=================================");
+
+        log.info("=================================");
+        log.info("PHONE OTP (DEV MODE)");
+        log.info("OTP   : " + otp);
+        log.info("PHONE : " + phone);
+        log.info("=================================");
     }
 
     @Override
@@ -100,10 +108,16 @@ public class PhoneOtpServiceImpl implements IPhoneOtpService {
 
         otpRepository.save(phoneOtp);
 
-        System.out.println("=================================");
-        System.out.println("RESEND PHONE OTP (DEV MODE)");
-        System.out.println("OTP   : " + otp);
-        System.out.println("PHONE : " + phone);
-        System.out.println("=================================");
+//        System.out.println("=================================");
+//        System.out.println("RESEND PHONE OTP (DEV MODE)");
+//        System.out.println("OTP   : " + otp);
+//        System.out.println("PHONE : " + phone);
+//        System.out.println("=================================");
+
+        log.info("=================================");
+        log.info("RESEND PHONE OTP (DEV MODE)");
+        log.info("OTP   : " + otp);
+        log.info("PHONE : " + phone);
+        log.info("=================================");
     }
 }
