@@ -28,7 +28,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3️⃣ Cache Maven dependencies
+      # 3️⃣ Cache Maven
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
@@ -41,19 +41,7 @@ jobs:
       - name: Build JAR
         run: mvn clean package -DskipTests
 
-      # 5️⃣ Configure AWS credentials (FROM GITHUB SECRETS)
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      # 6️⃣ Build Docker image
-      - name: Build Docker image
-        run: docker build -t twe-backend:latest .
-
-      # 7️⃣ Deploy to EC2 via SSH
+      # 5️⃣ Deploy to EC2 (BUILD + RUN THERE)
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -61,9 +49,17 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            cd ~/The_Wedding_Experts-Backend || exit 1
+
+            git pull origin main
+
+            mvn clean package -DskipTests
+
             docker stop twe-backend || true
             docker rm twe-backend || true
             docker image prune -f
+
+            docker build -t twe-backend:latest .
 
             docker run -d \
               --name twe-backend \
