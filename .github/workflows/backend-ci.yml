@@ -49,18 +49,34 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/The_Wedding_Experts-Backend || exit 1
-
+            set -e
+            
+            APP_DIR=/home/ubuntu/The_Wedding_Experts-Backend
+            
+            if [ ! -d "$APP_DIR" ]; then
+              echo "Project not found. Cloning repository..."
+              git clone https://github.com/${{ github.repository }}.git $APP_DIR
+            fi
+            
+            cd $APP_DIR
+            
+            echo "Pulling latest code..."
             git pull origin main
-
+            
+            echo "Building JAR..."
             mvn clean package -DskipTests
-
+            
+            echo "Stopping old container..."
             docker stop twe-backend || true
             docker rm twe-backend || true
+            
+            echo "Cleaning old images..."
             docker image prune -f
-
+            
+            echo "Building Docker image..."
             docker build -t twe-backend:latest .
-
+            
+            echo "Starting new container..."
             docker run -d \
               --name twe-backend \
               -p 8080:8080 \
