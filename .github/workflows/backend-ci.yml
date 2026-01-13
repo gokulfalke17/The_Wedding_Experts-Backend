@@ -48,6 +48,8 @@ jobs:
           host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          timeout: 120s
           script: |
             set -e
             
